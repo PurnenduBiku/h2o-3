@@ -1431,17 +1431,35 @@ public class Frame extends Lockable<Frame> {
     return new CSVStream(this, headers, hex_string);
   }
 
+  /** Convert this Frame to a CSV (in an {@link InputStream}), that optionally
+   *  is compatible with R 3.1's recent change to read.csv()'s behavior.
+   *
+   *  WARNING: Note that the end of a file is denoted by the read function
+   *  returning 0 instead of -1.
+   *
+   *  @return An InputStream containing this Frame as a CSV */
+  public InputStream toCSV(boolean headers, boolean hex_string, String na_value) {
+    return new CSVStream(this, headers, hex_string, na_value);
+  }
+
   public static class CSVStream extends InputStream {
+
     private final boolean _hex_string;
     byte[] _line;
     int _position;
     int _chkRow;
     Chunk[] _curChks;
     int _lastChkIdx;
+    String _na_value = "";
     public volatile int _curChkIdx; // used only for progress reporting
 
     public CSVStream(Frame fr, boolean headers, boolean hex_string) {
       this(firstChunks(fr), headers ? fr.names() : null, fr.anyVec().nChunks(), hex_string);
+    }
+
+    public CSVStream(Frame fr, boolean headers, boolean hex_string, String na_value) {
+      this(firstChunks(fr), headers ? fr.names() : null, fr.anyVec().nChunks(), hex_string);
+      _na_value = na_value;
     }
 
     private static Chunk[] firstChunks(Frame fr) {
@@ -1503,6 +1521,8 @@ public class Frame extends Lockable<Frame> {
             String s = _hex_string ? Double.toHexString(d) : Double.toString(d);
             sb.append(s);
           }
+        } else {
+          sb.append(_na_value);
         }
       }
       sb.append('\n');

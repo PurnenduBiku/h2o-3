@@ -1237,6 +1237,9 @@ class H2OFrame(object):
         :returns: A python object (a list of lists of strings, each list is a row, if use_pandas=False, otherwise
             a pandas DataFrame) containing this H2OFrame instance's data.
         """
+        assert_is_type(use_pandas, bool)
+        assert_is_type(header, bool)
+
         if can_use_pandas() and use_pandas:
             import pandas
             return pandas.read_csv(StringIO(self.get_frame_data()), low_memory=False)
@@ -1252,8 +1255,10 @@ class H2OFrame(object):
 
         This will create a multiline string, where each line will contain a separate row of frame's data, with
         individual values separated by commas.
+
         """
-        return h2o.api("GET /3/DownloadDataset", data={"frame_id": self.frame_id, "hex_string": False})
+
+        return h2o.api("GET /3/DownloadDataset", data={"frame_id": self.frame_id, "hex_string": False, 'na_value': 'NA'})
 
 
     def __getitem__(self, item):
